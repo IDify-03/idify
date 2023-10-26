@@ -1,19 +1,14 @@
-const { ethers } = require("hardhat");
+const { ethers } = require('hardhat');
 
-async function main() {
-  const DataVerificationContract = await ethers.getContractFactory("DataVerificationContract");
-  const dataVerificationContract = await DataVerificationContract.deploy(unlockTime, { value: lockedAmount });
+const main = async () => {
+  const dataVerificationContractFactory = await ethers.getContractFactory("DataVerificationContract");
+  const dataVerificationContract = await dataVerificationContractFactory.deploy();
 
-  await dataVerificationContract.deployed();
-
-  console.log(
-    `DataVerificationContract with ${ethers.utils.formatEther(lockedAmount)} ETH and unlock timestamp ${unlockTime} deployed to ${dataVerificationContract.address}`
-  );
+  console.log(`Contract deployed to`, dataVerificationContract.target);
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

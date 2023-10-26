@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 
-contract DataVerificationContract is Ownable(msg.sender) {
+contract DataVerificationContract is Ownable {
     using ECDSA for bytes32;
 
     struct SMEData {
@@ -24,7 +24,7 @@ contract DataVerificationContract is Ownable(msg.sender) {
 
     mapping(address => SMEData) public smeData;
     mapping(address => ProofRequest) public proofRequests;
-    mapping(address => bytes) public proofs;
+    mapping(address => bytes32) public proofs;
 
     event DataRegistered(address indexed user, string idNumber);
     event ProofRequested(address indexed requestingOrganization, address indexed sme, string dataToProve);
@@ -57,7 +57,7 @@ contract DataVerificationContract is Ownable(msg.sender) {
         require(request.isProven == false, "Proof already generated");
 
         bytes32 dataHash = keccak256(bytes(dataToProve));
-        bytes memory signature = ECDSA.recover(dataHash, msg.sender);
+        bytes32 signature = ECDSA.toEthSignedMessageHash(dataHash);
 
         // Store the signature as the proof
         proofs[msg.sender] = signature;
@@ -71,8 +71,8 @@ contract DataVerificationContract is Ownable(msg.sender) {
         require(request.isProven, "Proof not generated");
 
         // Use ECDSA to verify the proof
-        bytes memory signature = proofs[sme];
-        bytes32 dataHash = abi.encodePacked(dataToProve).toEthSignedMessageHash();
-        return dataHash.recover(signature) == sme;
+        bytes32 signature = proofs[sme];
+        bytes32 dataHash = ECDSA.toEthSignedMessageHash(keccak256(bytes(dataToProve)));
+        return dataHash == signature;
     }
 }
