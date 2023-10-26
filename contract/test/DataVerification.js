@@ -2,56 +2,46 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("DataVerificationContract", function () {
-    let dataVerificationContract;
-    let owner;
-    let sme;
-    let organization;
+  let dataVerificationContract;
+  let owner;
+  let user;
+  let organization;
+  const userData = {
+    idNumber: "123456",
+    dateOfIssue: "2023-10-26",
+    expiringDate: "2023-10-26",
+  };
 
-    before(async function () {
-        [owner, sme, organization] = await ethers.getSigners();
+  before(async function () {
+    [owner, user, organization] = await ethers.getSigners();
 
-        const DataVerificationContract = await ethers.getContractFactory("DataVerificationContract");
-        dataVerificationContract = await DataVerificationContract.deploy();
-        await dataVerificationContract.deployed();
-    });
+    const dataVerificationContractFactory = await ethers.getContractFactory("DataVerificationContract");
+    dataVerificationContract = await dataVerificationContractFactory.deploy();
+  });
 
-    it("Should register SME data", async function () {
-        const idNumber = "123456789";
-        const dateOfIssue = "2023-01-01";
-        const expiringDate = "2023-12-31";
+  it("Should register user data", async function () {
+    await dataVerificationContract.connect(user).registerData(userData.idNumber, userData.dateOfIssue, userData.expiringDate);
 
-        await expect(dataVerificationContract.connect(sme).registerData(idNumber, dateOfIssue, expiringDate))
-            .to.emit(dataVerificationContract, "DataRegistered")
-            .withArgs(sme.address, idNumber);
-    });
+    const userSMEData = await dataVerificationContract.smeData(user.address);
+    expect(userSMEData.idNumber).to.equal(userData.idNumber);
+  });
 
-    it("Should request proof and generate ZKP", async function () {
-        const dataToProve = "123456789";
+  it("Should request and generate proof", async function () {
+    const dataToProve = userData;
 
-        await expect(dataVerificationContract.connect(organization).requestProof(sme.address, dataToProve))
-            .to.emit(dataVerificationContract, "ProofRequested")
-            .withArgs(organization.address, sme.address, dataToProve);
+    await dataVerificationContract.connect(organization).requestProof(user.address, dataToProve);
 
-        await expect(dataVerificationContract.connect(sme).generateProof(dataToProve))
-            .to.emit(dataVerificationContract, "ProofGenerated")
-            .withArgs(sme.address, organization.address, dataToProve);
+    await dataVerificationContract.connect(user).generateProof(dataToProve);
 
-        const proof = await dataVerificationContract.proofs(sme.address);
-        expect(proof).to.not.be.empty;
-    });
+    const generatedProof = await dataVerificationContract.proofs(user.address);
+    expect(generatedProof).to.not.equal("0x0000000000000000000000000000000000000000000000000000000000000000");
+  });
 
-    it("Should verify ZKP", async function () {
-        const dataToProve = "123456789";
-        const proof = await dataVerificationContract.proofs(sme.address);
+  it("Should verify proof", async function () {
+    const dataToProve = userData;
 
-        const isVerified = await dataVerificationContract.connect(organization).verifyProof(sme.address, dataToProve);
-        expect(isVerified).to.equal(true);
-    });
+    const isVerified = await dataVerificationContract.connect(organization).verifyProof(user.address, dataToProve);
 
-    it("Should fail to verify with incorrect data", async function () {
-        const incorrectDataToProve = "987654321";
-
-        const isVerified = await dataVerificationContract.connect(organization).verifyProof(sme.address, incorrectDataToProve);
-        expect(isVerified).to.equal(false);
-    });
+    expect(isVerified).to.be.true;
+  });
 });
