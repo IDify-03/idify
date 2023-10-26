@@ -17,9 +17,6 @@ The Data Verification Platform is a blockchain-based solution designed to secure
 ## Prerequisites
 
 Before running the project, ensure you have the following:
-!!! Source libraries requires different compiler version  0.8.20+commit.a1b79de6
-Hardhat compiler verion is => (current compiler is 0.8.18+commit.87f61d96.Emscripten.clang)
-So you can't compile it with the hardhat but you can use Remix Ide to compile the contracts
 
 - [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed.
 - [Hardhat](https://hardhat.org/) or another Ethereum development environment set up.
