@@ -2,8 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 
 require('dotenv').config();
 
-// const KEY = process.env.KEY;
-const KEY = '146ef34e2daec2399194565dc48d3f324132ab6e5eba94982d19559c2d157e31'
+const KEY = process.env.KEY;
 /** @type import('hardhat/config').HardhatUserConfig */
 
 module.exports = {
